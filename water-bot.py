@@ -57,7 +57,9 @@ class WaterDateIntentHandler(AbstractRequestHandler):
         return ask_utils.is_intent_name("waterDateIntent")(handler_input)
 
     def handle(self, handler_input):
-        speak_output = "This is the last watering date"
+        waterDate = collection.find_one({"_id": 1})["date-last-watered"]
+        plantName = collection.find_one({"_id": 1})["name"]
+        speak_output = "%s was last watered on %s"%(plantName, waterDate)
         return (
             handler_input.response_builder
                 .speak(speak_output)
