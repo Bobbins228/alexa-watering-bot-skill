@@ -82,6 +82,21 @@ class WeeklyWateringIntentHandler(AbstractRequestHandler):
                 .response
         )
 
+class BiWeeklyWateringIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("biWeeklyWateringIntent")(handler_input)
+
+    def handle(self, handler_input):
+        newvalues = { "$set": { "watering-type": "bi-weekly" } }
+        collection.update_one(myquery, newvalues)
+        speak_output = "The watering type has been set to bi-weekly"
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
+
 
 class HelloWorldIntentHandler(AbstractRequestHandler):
     """Handler for Hello World Intent."""
@@ -224,6 +239,7 @@ sb.add_request_handler(FallbackIntentHandler())
 sb.add_request_handler(SessionEndedRequestHandler())
 sb.add_request_handler(WaterDateIntentHandler())
 sb.add_request_handler(WeeklyWateringIntentHandler())
+sb.add_request_handler(BiWeeklyWateringIntentHandler())
 sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
 
 sb.add_exception_handler(CatchAllExceptionHandler())
