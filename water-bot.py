@@ -13,11 +13,25 @@ from ask_sdk_core.dispatch_components import AbstractExceptionHandler
 from ask_sdk_core.handler_input import HandlerInput
 
 from ask_sdk_model import Response
-#Import confluent_kafka
+
+#My Imports
+import os
 from confluent_kafka import Producer
+import pymongo
+from dotenv import load_dotenv
+
+load_dotenv(".env")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+#Connect to Mongo Atlas and set the database to plant-profile and collection to profile
+client = pymongo.MongoClient(os.getenv("MONGO_STRING"))
+mongoDb = client["plant-profile"]
+collection = mongoDb["profile"]
+# Find a specific profile in the collection and sets it to the profile variable
+profile = collection.find_one({"_id": 1})
+myquery = { "_id": 1 }
 
 
 class LaunchRequestHandler(AbstractRequestHandler):
@@ -44,6 +58,21 @@ class WaterDateIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         speak_output = "This is the last watering date"
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
+
+class WeeklyWateringIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("weeklyWateringIntent")(handler_input)
+
+    def handle(self, handler_input):
+        newvalues = { "$set": { "watering-type": "weekly" } }
+        collection.update_one(myquery, newvalues)
+        speak_output = "The watering type has been set to weekly"
         return (
             handler_input.response_builder
                 .speak(speak_output)
@@ -192,6 +221,7 @@ sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
 sb.add_request_handler(SessionEndedRequestHandler())
 sb.add_request_handler(WaterDateIntentHandler())
+sb.add_request_handler(WeeklyWateringIntentHandler())
 sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
 
 sb.add_exception_handler(CatchAllExceptionHandler())
