@@ -114,6 +114,21 @@ class WeeklyWateringIntentHandler(AbstractRequestHandler):
                 .response
         )
 
+class ManualWateringIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("manualWateringIntent")(handler_input)
+
+    def handle(self, handler_input):
+        newvalues = { "$set": { "watering-type": "manual" } }
+        collection.update_one(myquery, newvalues)
+        speak_output = "The watering type has been set to manual"
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
+
 class MoistureWateringIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("moistureWateringIntent")(handler_input)
@@ -303,6 +318,7 @@ sb.add_request_handler(WaterDateIntentHandler())
 sb.add_request_handler(WeeklyWateringIntentHandler())
 sb.add_request_handler(MoistureWateringIntentHandler())
 sb.add_request_handler(BiWeeklyWateringIntentHandler())
+sb.add_request_handler(ManualWateringIntentHandler())
 sb.add_request_handler(GetTemperatureIntentHandler())
 sb.add_request_handler(GetHumidityIntentHandler())
 sb.add_request_handler(EasterEggIntentHandler())
