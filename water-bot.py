@@ -51,7 +51,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-    
+#Gets the latest watering date of the plant and speaks it back to the user    
 class WaterDateIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("waterDateIntent")(handler_input)
@@ -66,7 +66,7 @@ class WaterDateIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-
+#Gets the current temperature from the mongo database
 class GetTemperatureIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("getTemperatureIntent")(handler_input)
@@ -82,7 +82,7 @@ class GetTemperatureIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-
+#gets the humidity from the mongo database
 class GetHumidityIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("getHumidityIntent")(handler_input)
@@ -98,7 +98,22 @@ class GetHumidityIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
+#Gets the watering type and speak it to the user
+class GetWateringTypeIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("getWateringTypeIntent")(handler_input)
 
+    def handle(self, handler_input):
+        wateringType = collection.find_one({"_id": 1})["watering-type"]
+        speak_output = "The watering type is set to %s based watering"%(wateringType)
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
+
+#Sets the watering type to weekly
 class WeeklyWateringIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("weeklyWateringIntent")(handler_input)
@@ -113,7 +128,7 @@ class WeeklyWateringIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-
+#sets the watering type to manual
 class ManualWateringIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("manualWateringIntent")(handler_input)
@@ -128,7 +143,7 @@ class ManualWateringIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-
+#Sets the watering type to moisture based
 class MoistureWateringIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("moistureWateringIntent")(handler_input)
@@ -143,7 +158,7 @@ class MoistureWateringIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-
+#Sets the watering type to bi-weekly
 class BiWeeklyWateringIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("biWeeklyWateringIntent")(handler_input)
@@ -158,7 +173,6 @@ class BiWeeklyWateringIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-
 
 # A fun metal gear easter egg
 class EasterEggIntentHandler(AbstractRequestHandler):
@@ -321,6 +335,7 @@ sb.add_request_handler(BiWeeklyWateringIntentHandler())
 sb.add_request_handler(ManualWateringIntentHandler())
 sb.add_request_handler(GetTemperatureIntentHandler())
 sb.add_request_handler(GetHumidityIntentHandler())
+sb.add_request_handler(GetWateringTypeIntentHandler())
 sb.add_request_handler(EasterEggIntentHandler())
 sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
 
