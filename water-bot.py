@@ -16,7 +16,7 @@ from ask_sdk_model import Response
 
 #My Imports
 import os
-from confluent_kafka import Producer
+from confluent_kafka import Producer, Consumer
 import pymongo
 from dotenv import load_dotenv
 
@@ -33,6 +33,39 @@ collection = mongoDb["profile"]
 profile = collection.find_one({"_id": 1})
 myquery = { "_id": 1 }
 
+#Gathers sensitive data from the .env file
+bootstrap_server = os.getenv("BOOTSTRAP_SERVER")
+sasl_user_name = os.getenv("CLIENT_ID")
+sasl_password = os.getenv("CLIENT_SECRET")
+
+#Set up the Kafka producer
+p = Producer({
+      'bootstrap.servers': bootstrap_server,
+      'security.protocol': 'SASL_SSL',
+      'sasl.mechanisms': 'PLAIN',
+      'sasl.username': sasl_user_name,
+      'sasl.password': sasl_password,
+    }
+  )
+
+c = Consumer({
+    'bootstrap.servers': bootstrap_server,
+    'security.protocol': 'SASL_SSL',
+    'sasl.mechanisms': 'PLAIN',
+    'sasl.username': sasl_user_name,
+    'sasl.password': sasl_password,
+    'group.id': 'client-group',
+    'auto.offset.reset': 'latest',
+})
+
+c.subscribe(['client'])
+
+#Prints confirmed/failed produced messages
+def delivery_report(err, msg):
+    if err is not None:
+        print('Message delivery failed: {}'.format(err))
+    else:
+        print('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
 
 class LaunchRequestHandler(AbstractRequestHandler):
     """Handler for Skill Launch."""
@@ -60,6 +93,22 @@ class WaterDateIntentHandler(AbstractRequestHandler):
         waterDate = collection.find_one({"_id": 1})["date-last-watered"]
         plantName = collection.find_one({"_id": 1})["name"]
         speak_output = "%s was last watered on %s"%(plantName, waterDate)
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
+
+class GetTemperatureIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("getTemperatureIntent")(handler_input)
+
+    def handle(self, handler_input):
+        sliced = slice(13,-1)
+        temp = collection.find_one({"_id": 1})["temperature"]
+        temperature = temp[sliced]
+        speak_output = "The current room temperature is %s degrees celcius"%(temperature)
         return (
             handler_input.response_builder
                 .speak(speak_output)
@@ -256,6 +305,7 @@ sb.add_request_handler(WaterDateIntentHandler())
 sb.add_request_handler(WeeklyWateringIntentHandler())
 sb.add_request_handler(MoistureWateringIntentHandler())
 sb.add_request_handler(BiWeeklyWateringIntentHandler())
+sb.add_request_handler(GetTemperatureIntentHandler())
 sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
 
 sb.add_exception_handler(CatchAllExceptionHandler())
